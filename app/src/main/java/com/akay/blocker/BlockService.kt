@@ -58,6 +58,7 @@ class BlockService : AccessibilityService() {
             if (i.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
             val pk = i.data?.schemeSpecificPart ?: return
             if (pk == packageName) return
+            if (Store.finApps().contains(pk)) return
             Store.addBlockedApp(pk)
         }
     }
@@ -104,6 +105,7 @@ class BlockService : AccessibilityService() {
         if (e == null) return
         val pkg = e.packageName?.toString() ?: return
         if (pkg == packageName || pkg == "com.android.systemui") return
+        if (Store.on("finance") && Store.finApps().contains(pkg)) return
         val type = e.eventType
 
         if (type == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED) {
@@ -187,6 +189,7 @@ class BlockService : AccessibilityService() {
         val root = rootInActiveWindow ?: return
         val pkg = root.packageName?.toString() ?: evPkg
         if (pkg == packageName || pkg == "com.android.systemui") return
+        if (Store.on("finance") && Store.finApps().contains(pkg)) return
         if (Store.blockedApps().contains(pkg)) {
             block(true)
             return

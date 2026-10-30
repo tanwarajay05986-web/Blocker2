@@ -183,8 +183,10 @@ internal fun MainActivity.buildBlocking(): View {
         ),
         lpm(MATCH, WRAP, 0, 0, 0, 14)
     )
+    c.addView(financeSection(), lpm(MATCH, WRAP, 0, 0, 0, 14))
 
     val redirect = Store.redirect()
+    
     c.addView(
         section(
             G.MONITOR, "Customize Blocked Screen",
@@ -213,4 +215,114 @@ internal fun MainActivity.buildBlocking(): View {
         lpm(MATCH, WRAP, 0, 0, 0, 0)
     )
     return c
+}
+private val FIN_NAMES = mapOf(
+    "com.snapwork.IDBI" to "IDBI Bank GO Mobile+",
+    "in.org.npci.upiapp" to "BHIM UPI",
+    "com.sbi.lotusintouch" to "SBI YONO",
+    "com.google.android.apps.nbu.paisa.user" to "Google Pay",
+    "com.phonepe.app" to "PhonePe",
+    "net.one97.paytm" to "Paytm",
+    "com.snapwork.hdfc" to "HDFC Bank",
+    "com.csam.icici.bank.imobile" to "ICICI iMobile Pay"
+)
+
+private fun MainActivity.finAppRow(pk: String): View {
+    val r = LinearLayout(this)
+    r.orientation = LinearLayout.HORIZONTAL
+    r.gravity = Gravity.CENTER_VERTICAL
+    r.setPadding(dp(12), dp(8), dp(4), dp(8))
+
+    var name = FIN_NAMES[pk] ?: pk
+    val iv = android.widget.ImageView(this)
+    var haveIcon = false
+    try {
+        iv.setImageDrawable(packageManager.getApplicationIcon(pk))
+        name = packageManager.getApplicationLabel(packageManager.getApplicationInfo(pk, 0)).toString()
+        haveIcon = true
+    } catch (e: Throwable) {
+    }
+    if (haveIcon) {
+        r.addView(iv, lp(dp(30), dp(30)))
+    } else {
+        r.addView(Glyph(this, G.SHIELD, C.icon), lp(dp(30), dp(30)))
+    }
+
+    val col = LinearLayout(this)
+    col.orientation = LinearLayout.VERTICAL
+    col.setPadding(dp(14), 0, dp(6), 0)
+    col.addView(tv(name, 16f, C.text))
+    val sub = tv(pk, 11f, C.sub)
+    sub.maxLines = 1
+    col.addView(sub)
+    r.addView(col, lp(0, WRAP, 1f))
+
+    val del = FrameLayout(this)
+    del.addView(Glyph(this, G.TRASH, C.icon), FrameLayout.LayoutParams(dp(22), dp(22), Gravity.CENTER))
+    del.setOnClickListener {
+        gate {
+            Store.removeFin(pk)
+            showTab(tab)
+        }
+    }
+    r.addView(del, lp(dp(44), dp(40)))
+    return r
+}
+
+private fun MainActivity.pickFinApp() {
+    val pm = packageManager
+    val i = android.content.Intent(android.content.Intent.ACTION_MAIN)
+    i.addCategory(android.content.Intent.CATEGORY_LAUNCHER)
+    val have = Store.finApps()
+    val list = ArrayList<Pair<String, String>>()
+    val seen = HashSet<String>()
+    for (ri in pm.queryIntentActivities(i, 0)) {
+        val pk = ri.activityInfo.packageName
+        if (pk == packageName || have.contains(pk) || !seen.add(pk)) continue
+        list.add(Pair(pk, ri.loadLabel(pm).toString()))
+    }
+    list.sortBy { it.second.lowercase() }
+    if (list.isEmpty()) {
+        toast("No apps found")
+        return
+    }
+    val names = Array(list.size) { list[it].second }
+    AlertDialog.Builder(this)
+        .setTitle("Add finance app")
+        .setItems(names) { _, w ->
+            Store.addFin(list[w].first)
+            toast(list[w].second + " added")
+            showTab(tab)
+        }
+        .setNegativeButton("Cancel", null)
+        .show()
+}
+
+private fun MainActivity.finAddRow(): View {
+    val r = LinearLayout(this)
+    r.orientation = LinearLayout.HORIZONTAL
+    r.gravity = Gravity.CENTER_VERTICAL
+    r.setPadding(dp(12), dp(12), dp(12), dp(12))
+    val plus = tv("+", 22f, Color.WHITE, 2)
+    plus.gravity = Gravity.CENTER
+    plus.background = rr(C.coral, 15)
+    r.addView(plus, lp(dp(30), dp(30)))
+    val t = tv("Add finance app", 16f, C.coral, 1)
+    t.setPadding(dp(14), 0, 0, 0)
+    r.addView(t)
+    r.setOnClickListener { pickFinApp() }
+    return r
+}
+
+internal fun MainActivity.financeSection(): View {
+    val rows = ArrayList<View>()
+    rows.add(
+        toggleRow(
+            G.SHIELD, "Finance safe mode", "finance",
+            "Banking and payment apps are never scanned or blocked while this is on. Some banking apps may still show their own accessibility warning, because they check whether any accessibility service is turned on."
+        )
+    )
+    for (pk in Store.finApps().sortedBy { (FIN_NAMES[it] ?: it).lowercase() }) rows.add(finAppRow(pk))
+    rows.add(finAddRow())
+    return section(G.SHIELD, "Finance Mode", rows)
 }

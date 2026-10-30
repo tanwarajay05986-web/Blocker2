@@ -10,8 +10,20 @@ object Config {
 
 object Store {
     private var sp: SharedPreferences? = null
+    private var finCache: Set<String>? = null
 
     const val DEFAULT_MSG = "This page has been blocked \uD83D\uDD12 \uD83D\uDC80 \uD83D\uDD25"
+
+    private val FIN_DEFAULT = setOf(
+        "com.snapwork.IDBI",
+        "in.org.npci.upiapp",
+        "com.sbi.lotusintouch",
+        "com.google.android.apps.nbu.paisa.user",
+        "com.phonepe.app",
+        "net.one97.paytm",
+        "com.snapwork.hdfc",
+        "com.csam.icici.bank.imobile"
+    )
 
     fun init(c: Context) {
         if (sp == null) sp = c.applicationContext.getSharedPreferences("blocker", Context.MODE_PRIVATE)
@@ -19,8 +31,8 @@ object Store {
 
     private fun p(): SharedPreferences = sp!!
 
-    // toggles: adult, imgvid, ytshorts, igreels, snap, wachan, uninstall, browsers, newapps
-    fun on(key: String): Boolean = p().getBoolean("t_$key", key == "adult")
+    // toggles: adult, imgvid, ytshorts, igreels, snap, wachan, uninstall, browsers, newapps, finance
+    fun on(key: String): Boolean = p().getBoolean("t_$key", key == "adult" || key == "finance")
 
     fun set(key: String, v: Boolean) {
         p().edit().putBoolean("t_$key", v).apply()
@@ -106,5 +118,36 @@ object Store {
         val s = getSet("white")
         s.remove(w)
         putSet("white", s)
+    }
+
+    // ---------- finance apps ----------
+
+    fun finApps(): Set<String> {
+        val c = finCache
+        if (c != null) return c
+        val s: Set<String>
+        if (p().getBoolean("fin_init", false)) {
+            s = getSet("fin")
+        } else {
+            s = HashSet(FIN_DEFAULT)
+            putSet("fin", s)
+            p().edit().putBoolean("fin_init", true).apply()
+        }
+        finCache = s
+        return s
+    }
+
+    fun addFin(pk: String) {
+        val s = HashSet(finApps())
+        s.add(pk)
+        putSet("fin", s)
+        finCache = s
+    }
+
+    fun removeFin(pk: String) {
+        val s = HashSet(finApps())
+        s.remove(pk)
+        putSet("fin", s)
+        finCache = s
     }
 }

@@ -183,10 +183,10 @@ internal fun MainActivity.buildBlocking(): View {
         ),
         lpm(MATCH, WRAP, 0, 0, 0, 14)
     )
+
     c.addView(financeSection(), lpm(MATCH, WRAP, 0, 0, 0, 14))
 
     val redirect = Store.redirect()
-    
     c.addView(
         section(
             G.MONITOR, "Customize Blocked Screen",
@@ -216,6 +216,7 @@ internal fun MainActivity.buildBlocking(): View {
     )
     return c
 }
+
 private val FIN_NAMES = mapOf(
     "com.snapwork.IDBI" to "IDBI Bank GO Mobile+",
     "in.org.npci.upiapp" to "BHIM UPI",
@@ -290,12 +291,15 @@ private fun MainActivity.pickFinApp() {
     val names = Array(list.size) { list[it].second }
     AlertDialog.Builder(this)
         .setTitle("Add finance app")
-                .setItems(names) { _, w ->
+        .setItems(names) { _, w ->
             Store.addFin(list[w].first)
             BlockService.refresh()
             toast(list[w].second + " added")
             showTab(tab)
         }
+        .setNegativeButton("Cancel", null)
+        .show()
+}
 
 private fun MainActivity.finAddRow(): View {
     val r = LinearLayout(this)

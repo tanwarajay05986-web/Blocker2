@@ -60,15 +60,21 @@ object Builtin {
         "com.android.chrome", "com.chrome.beta", "com.chrome.dev", "com.chrome.canary",
         "com.brave.browser", "com.brave.browser_beta", "com.brave.browser_nightly",
         "org.mozilla.firefox", "org.mozilla.firefox_beta", "org.mozilla.fenix", "org.mozilla.focus",
-        "org.mozilla.klar", "com.microsoft.emmx", "com.opera.browser", "com.opera.browser.beta",
+        "org.mozilla.klar", "org.mozilla.rocket",
+        "com.microsoft.emmx", "com.opera.browser", "com.opera.browser.beta",
         "com.opera.mini.native", "com.opera.mini.native.beta", "com.opera.gx",
         "com.sec.android.app.sbrowser", "com.duckduckgo.mobile.android", "com.vivaldi.browser",
-        "com.kiwibrowser.browser", "com.zoho.ulaa", "com.zoho.ulaa.browser", "com.mi.globalbrowser",
-        "com.android.browser", "com.heytap.browser", "com.oppo.browser"
+        "com.kiwibrowser.browser", "com.mi.globalbrowser",
+        "com.android.browser", "com.heytap.browser", "com.oppo.browser",
+        "com.zoho.primeum.stable", "com.zoho.ulaa", "com.zoho.ulaa.browser",
+        "org.torproject.torbrowser", "com.nationaledtech.spinbrowser",
+        "com.ecosia.android", "com.hsv.freeadblockerbrowser",
+        "idm.internet.download.manager", "com.instantbits.cast.webvideo"
     )
 
     val BROWSER_NAMES = arrayOf(
-        "chrome", "brave", "firefox", "edge", "opera", "ulaa", "vivaldi", "duckduckgo",
-        "samsung internet", "kiwi"
+        "chrome", "brave", "firefox", "firefox lite", "edge", "opera", "opera mini", "ulaa",
+        "vivaldi", "duckduckgo", "samsung internet", "kiwi", "tor browser", "spin", "ecosia",
+        "free adblocker", "1dm", "web video cast"
     )
 }

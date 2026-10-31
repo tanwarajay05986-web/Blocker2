@@ -60,6 +60,7 @@ class BlockService : AccessibilityService() {
             if (pk == packageName) return
             if (Store.finApps().contains(pk)) return
             Store.addBlockedApp(pk)
+            applyFilter()
         }
     }
 
@@ -68,9 +69,10 @@ class BlockService : AccessibilityService() {
         Store.init(this)
     }
 
-    override fun onServiceConnected() {
+        override fun onServiceConnected() {
         super.onServiceConnected()
         Store.init(this)
+        instance = this
         wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         findBrowsers()
         if (!registered) {
@@ -82,8 +84,35 @@ class BlockService : AccessibilityService() {
             } catch (e: Throwable) {
             }
         }
+        applyFilter()
     }
 
+    // Android ab sirf inhi apps ke events Blocker ko bhejta hai. Baaki sab, finance apps samet, kabhi scan hi nahi hote.
+    internal fun applyFilter() {
+        val info = serviceInfo ?: return
+        if (Store.on("uninstall") && Perm.adminActive(this)) {
+            // har phone brand ka Settings app alag naam ka hota hai, isliye yahi ek feature poora device dekhta hai
+            info.packageNames = null
+        } else {
+            val set = HashSet<String>()
+            set.addAll(if (Store.on("browsers")) browserPkgs else Builtin.BROWSERS.toHashSet())
+            if (Store.on("ytshorts")) set.add("com.google.android.youtube")
+            if (Store.on("igreels")) set.add("com.instagram.android")
+            if (Store.on("snap")) set.add("com.snapchat.android")
+            if (Store.on("wachan")) {
+                set.add("com.whatsapp")
+                set.add("com.whatsapp.w4b")
+            }
+            set.addAll(Store.blockedApps())
+            set.removeAll(Store.finApps())
+            set.remove(packageName)
+            info.packageNames = if (set.isEmpty()) arrayOf("$packageName.none") else set.toTypedArray()
+        }
+        try {
+            serviceInfo = info
+        } catch (e: Throwable) {
+        }
+    }
     private fun findBrowsers() {
         val set = HashSet<String>(Builtin.BROWSERS)
         try {
@@ -105,7 +134,7 @@ class BlockService : AccessibilityService() {
         if (e == null) return
         val pkg = e.packageName?.toString() ?: return
         if (pkg == packageName || pkg == "com.android.systemui") return
-        if (Store.on("finance") && Store.finApps().contains(pkg)) return
+        if (Store.finApps().contains(pkg)) return
         val type = e.eventType
 
         if (type == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED) {
@@ -189,7 +218,7 @@ class BlockService : AccessibilityService() {
         val root = rootInActiveWindow ?: return
         val pkg = root.packageName?.toString() ?: evPkg
         if (pkg == packageName || pkg == "com.android.systemui") return
-        if (Store.on("finance") && Store.finApps().contains(pkg)) return
+        if (Store.finApps().contains(pkg)) return
         if (Store.blockedApps().contains(pkg)) {
             block(true)
             return
@@ -353,6 +382,16 @@ class BlockService : AccessibilityService() {
             }
             registered = false
         }
+        if (instance === this) instance = null
         super.onDestroy()
+    }
+
+    companion object {
+        @Volatile private var instance: BlockService? = null
+
+        // toggle badalne ya finance/blocked app list badalne ke baad UI se bulaya jaata hai
+        fun refresh() {
+            instance?.applyFilter()
+        }
     }
 }

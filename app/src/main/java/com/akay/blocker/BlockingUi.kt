@@ -262,6 +262,7 @@ private fun MainActivity.finAppRow(pk: String): View {
     del.setOnClickListener {
         gate {
             Store.removeFin(pk)
+            BlockService.refresh()
             showTab(tab)
         }
     }
@@ -289,14 +290,12 @@ private fun MainActivity.pickFinApp() {
     val names = Array(list.size) { list[it].second }
     AlertDialog.Builder(this)
         .setTitle("Add finance app")
-        .setItems(names) { _, w ->
+                .setItems(names) { _, w ->
             Store.addFin(list[w].first)
+            BlockService.refresh()
             toast(list[w].second + " added")
             showTab(tab)
         }
-        .setNegativeButton("Cancel", null)
-        .show()
-}
 
 private fun MainActivity.finAddRow(): View {
     val r = LinearLayout(this)
@@ -314,15 +313,23 @@ private fun MainActivity.finAddRow(): View {
     return r
 }
 
-internal fun MainActivity.financeSection(): View {
-    val rows = ArrayList<View>()
-    rows.add(
-        toggleRow(
-            G.SHIELD, "Finance safe mode", "finance",
-            "Banking and payment apps are never scanned or blocked while this is on. Some banking apps may still show their own accessibility warning, because they check whether any accessibility service is turned on."
+private fun MainActivity.finInfoRow(): View {
+    val col = LinearLayout(this)
+    col.orientation = LinearLayout.VERTICAL
+    col.setPadding(dp(12), dp(10), dp(12), dp(6))
+    col.addView(
+        tv(
+            "These apps are never scanned, whatever your other settings are. Their screens, text, buttons and layout are never read by this service.",
+            13f, C.sub
         )
     )
+    return col
+}
+
+internal fun MainActivity.financeSection(): View {
+    val rows = ArrayList<View>()
+    rows.add(finInfoRow())
     for (pk in Store.finApps().sortedBy { (FIN_NAMES[it] ?: it).lowercase() }) rows.add(finAppRow(pk))
     rows.add(finAddRow())
-    return section(G.SHIELD, "Finance Mode", rows)
+    return section(G.SHIELD, "Finance Apps (Never Scanned)", rows)
 }

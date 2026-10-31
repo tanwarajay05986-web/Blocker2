@@ -32,13 +32,13 @@ class MainActivity : ComponentActivity() {
     // 0 = nothing, 1 = waiting for Accessibility, 2 = waiting for Overlay, 3 = waiting for Battery
     private var flow = 0
 
-    private val adminLauncher = registerForActivityResult(
+        private val adminLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { _ ->
         if (Perm.adminActive(this)) Store.set("uninstall", true) else toast("Not allowed")
+        BlockService.refresh()
         if (screen == "main") showTab(tab)
     }
-
     // ---------- helpers ----------
 
     internal fun lp(w: Int, h: Int, wt: Float = 0f): LinearLayout.LayoutParams =
@@ -99,12 +99,13 @@ class MainActivity : ComponentActivity() {
             .show()
     }
 
-    internal fun toggleKey(key: String, sw: Sw) {
+        internal fun toggleKey(key: String, sw: Sw) {
         if (!sw.on) {
             if (key == "uninstall") {
                 if (Perm.adminActive(this)) {
                     Store.set(key, true)
                     sw.on = true
+                    BlockService.refresh()
                 } else {
                     adminLauncher.launch(Perm.adminIntent(this))
                 }
@@ -112,12 +113,14 @@ class MainActivity : ComponentActivity() {
             }
             Store.set(key, true)
             sw.on = true
+            BlockService.refresh()
             if (!Perm.accEnabled(this)) toast("Turn on the Accessibility service first")
         } else {
             gate {
                 Store.set(key, false)
                 sw.on = false
                 if (key == "uninstall") Perm.removeAdmin(this)
+                BlockService.refresh()
             }
         }
     }

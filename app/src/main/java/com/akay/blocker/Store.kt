@@ -32,8 +32,7 @@ object Store {
     private fun p(): SharedPreferences = sp!!
 
     // toggles: adult, imgvid, ytshorts, igreels, snap, wachan, uninstall, browsers, newapps, finance
-    fun on(key: String): Boolean = p().getBoolean("t_$key", key == "adult" || key == "finance")
-
+    fun on(key: String): Boolean = p().getBoolean("t_$key", key == "adult")
     fun set(key: String, v: Boolean) {
         p().edit().putBoolean("t_$key", v).apply()
     }
